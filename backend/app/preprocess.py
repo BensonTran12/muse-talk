@@ -1,4 +1,3 @@
-pip install mne
 import numpy as np
 import mne
 from scipy.signal import butter, filtfilt, iirnotch
