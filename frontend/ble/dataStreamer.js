@@ -1,40 +1,43 @@
-import WebSocket from 'ws'
+import fetch from 'node-fetch'
 import { parseMuseFrame } from './frameParser.js'
 
 
 class DataStreamer {
-    constructor(backendUrl) {
-        this.backendUrl = backendUrl
-        this.ws = null
-    }
+constructor() {
+// Backend container hostname from Docker Compose (service name)
+this.backendUrl = process.env.VITE_BACKEND_URL || 'http://backend:5000/frame'
+}
 
 
-    connect() {
-        this.ws = new WebSocket(this.backendUrl)
+async sendFrame(buffer) {
+const frame = parseMuseFrame(buffer)
+if (!frame) return
 
 
-        this.ws.on('open', () => console.log(`[DataStreamer] Connected to backend at ${this.backendUrl}`))
-        this.ws.on('close', () => console.log('[DataStreamer] Disconnected from backend'))
-        this.ws.on('error', (err) => console.error('[DataStreamer] WebSocket error:', err))
-    }
+try {
+const response = await fetch(this.backendUrl, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(frame)
+})
 
 
-    sendRaw(buffer) {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return
+if (!response.ok) {
+console.error(`[DataStreamer] Backend responded with ${response.status}`)
+return null
+}
 
 
-        const parsed = parseMuseFrame(buffer)
-        if (parsed) {
-            this.ws.send(JSON.stringify(parsed))
-        }
-    }
+const result = await response.json()
+console.log('[DataStreamer] Frame processed:', result)
+return result // for example { input: "Up" }
 
 
-    close() {
-        if (this.ws) {
-            this.ws.close()
-        }
-    }
+} catch (err) {
+console.error('[DataStreamer] Error sending frame:', err.message)
+return null
+}
+}
 }
 
 
