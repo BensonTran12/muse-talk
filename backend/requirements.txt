@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+numpy
+scipy
+mne
+boto3
+pandas
+joblib
+schedule
