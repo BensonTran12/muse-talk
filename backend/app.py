@@ -1,11 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello from FastAPI!"}
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "query": q}
+@app.post("/frame")
+async def receive_frame(request: Request):
+    data = await request.json()
+    # TODO: add cleaning and classification logic later
+    print("Received frame:", data)
+    return JSONResponse({"input": "Up"})  # mock shit rn
