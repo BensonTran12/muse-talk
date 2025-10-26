@@ -1,0 +1,132 @@
+/*floating icon*/
+.brain-icon {
+  position: fixed;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+ /* background: url("/brain.png") center/cover no-repeat;*/
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 2000;
+  transition: transform 0.25s ease;
+  box-shadow: 0 0 12px rgba(0,255,255,0.5);
+  z-index: 99999;
+  background-color: black;
+}
+.brain-icon:hover {
+  transform: translateY(-50%) scale(1.08);
+}
+.brain-icon.active {
+  transform: translateY(-50%) scale(1.15);
+}
+
+
+/* Overlay */
+.panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 10, 25, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 1990;
+}
+
+/* Slide Panel */
+.brain-panel {
+  position: fixed;
+  top: 0;
+  right: -360px;
+  width: 360px;
+  height: 100vh;
+  background: linear-gradient(180deg,#0b0f2a 0%,#09162f 100%);
+  border-left: 2px solid #00eaff;
+  border-radius: 18px 0 0 18px;
+  z-index: 2001;
+  transition: right 0.28s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99998; 
+ 
+}
+.brain-panel.open {
+  right: 0;
+}
+.panel-overlay {
+  z-index: 99997;
+}
+.brain-panel:not(.open) {
+  border-left: none;
+  background: transparent !important;
+}
+
+
+.header { font-size: 1.2rem; margin-bottom: 6px; }
+.status.ok { color: #00ff81; }
+
+.hud {
+  font-size: 2.8rem;
+  margin: 6px 0 8px;
+  user-select: none;
+}
+.hud .active {
+  color: #00eaff;
+  opacity: 1;
+}
+.hud div { opacity: 0.3 }
+.hud .mid {
+  display: flex;
+  justify-content: center;
+  gap: 2.2rem;
+}
+
+.output-row {
+  margin: 5px 0 8px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  align-items: center;
+}
+
+.train-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #eee;
+  cursor: pointer;
+}
+.train-btn.recording {
+  background: #c50000;
+  color: white;
+  font-weight: bold;
+}
+
+.save-count { font-size: 1rem; font-weight: bold; }
+
+.graph {
+  margin: 6px 0 6px;
+  width: 100%;
+  border: 1px solid #00eaff;
+  border-radius: 6px;
+}
+
+.legend {
+  font-size: 0.75rem;
+  margin-bottom: 10px;
+}
+.legend .a { color:#00eaff }
+.legend .b { color:#00ff90 }
+.legend .t { color:#ffdd00 }
+.legend .g { color:#ff3b3b }
+
+.connect-btn {
+  width: 100%;
+  padding: 6px;
+  border-radius: 8px;
+  background: #0f1b39;
+  border: 1px solid #00eaff;
+  cursor: pointer;
+}
+.connect-btn:hover {
+  background: #112049;
+}

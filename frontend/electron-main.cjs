@@ -1,10 +1,10 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const http = require('http');
+const { app, BrowserWindow } = require("electron");
+const path = require("path");
+const http = require("http");
 
 let mainWindow;
 
-// Prevent multiple Electron instances (avoids double window bug)
+// Prevent duplicate windows
 if (!app.requestSingleInstanceLock()) {
   app.quit();
   process.exit(0);
@@ -12,57 +12,38 @@ if (!app.requestSingleInstanceLock()) {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 400,
+    height: 600,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    hasShadow: false,
+    skipTaskbar: true,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      sandbox: false,
     }
   });
 
-  const devURL = 'http://localhost:5173';
-  const prodPath = path.join(__dirname, 'dist', 'index.html');
+  const devURL = "http://localhost:5173";
+  const prodURL = path.join(__dirname, "dist", "index.html");
 
-  // Try to connect to Vite dev server; fallback to production build
-  http
-    .get(devURL, res => {
-      if (res.statusCode === 200) {
-        console.log('🧠 Vite dev server detected, loading from localhost');
-        mainWindow.loadURL(devURL);
-        mainWindow.webContents.openDevTools();
-      } else {
-        console.log('⚙️ No dev server, loading production build');
-        mainWindow.loadFile(prodPath);
-      }
-    })
-    .on('error', () => {
-      console.log('⚙️ No dev server, loading production build');
-      mainWindow.loadFile(prodPath);
-    });
+  // Try to load Vite dev server
+  http.get(devURL, res => {
+    mainWindow.loadURL(devURL); // <-- CRITICAL: load sidebar UI route
+  }).on("error", () => {
+    mainWindow.loadFile(prodURL);
+  });
 
-  mainWindow.on('closed', () => {
+  mainWindow.on("closed", () => {
     mainWindow = null;
   });
 }
 
-// App lifecycle
-app.whenReady().then(() => {
-  createWindow();
+app.whenReady().then(createWindow);
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
-
-// IPC example
-ipcMain.on('toMain', (event, data) => {
-  console.log('[Main Process] Received:', data);
-  if (mainWindow) {
-    mainWindow.webContents.send('fromMain', 'Message received!');
-  }
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
 });
