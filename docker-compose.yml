@@ -1,25 +1,23 @@
+version: "3.9"
 services:
   backend:
     build: ./backend
     container_name: muse-backend
     ports:
       - "5000:5000"
-      - "8080:8080"
-    env_file:
-      - ./backend/.env.backend
     volumes:
       - ./backend/data/cache:/app/data/cache
       - ./backend/data/models:/app/data/models
-    restart: always
+    environment:
+      - ENV=production
 
   frontend:
     build: ./frontend
     container_name: muse-frontend
-    network_mode: host   # BLUETOOTH BABY LETS GET IT
-    env_file:
-      - ./frontend/.env.frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/usr/src/app
-    restart: always
+    command: npm run dev

@@ -1,5 +1,5 @@
 fastapi
-uvicorn
+uvicorn[standard]
 numpy
 scipy
 mne
@@ -7,4 +7,6 @@ boto3
 pandas
 joblib
 schedule
-uvicorn
+requests
+supervisor
+scikit-learn
