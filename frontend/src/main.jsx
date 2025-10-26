@@ -8,7 +8,7 @@ console.log("✅ main.jsx loaded", window.location.pathname);
 const rootEl = document.getElementById("root");
 
 if (!rootEl) {
-  console.error("❌ No #root element found");
+  console.error(" No #root element found");
 }
 
 const isPanel = window.location.pathname.includes("panel");

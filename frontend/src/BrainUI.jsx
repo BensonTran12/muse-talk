@@ -1,5 +1,5 @@
-  // BCI UI stuff. fake data rn.
-  import React, { useState, useEffect, useRef } from "react";
+// BCI UI — polished panel (uses the brand styles you added in BrainStyles.css)
+import React, { useState, useEffect, useRef } from "react";
 
 // Fake model classes. (Swap with real inference later.)
 const DIR = ["UP", "DOWN", "LEFT", "RIGHT", "NEUTRAL"];
@@ -284,20 +284,10 @@ export default function BrainUI() {
         <div className="record-counter">
           {saved}
         </div>
+      )}
 
-        <canvas ref={graphRef} width="350" height="120" className="graph" />
 
-        <div className="legend">
-          <span className="a">Alpha</span> · 
-          <span className="b">Beta</span> · 
-          <span className="t">Theta</span> · 
-          <span className="g">Gamma</span>
-        </div>
 
-        <button className="connect-btn" onClick={toggleConnect}>
-          {connected ? "Disconnect" : "Connect Headset"}
-        </button>
-      </div>
-    );
-
-  }
+    </div>
+  );
+}
