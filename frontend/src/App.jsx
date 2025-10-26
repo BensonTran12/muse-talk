@@ -1,11 +1,13 @@
 import React from "react";
-import BrainUI from "./BrainUI.jsx";
-import BrainToggle from "./BrainToggle.jsx";
+import IconLauncher from "./IconLauncher.jsx";
+import PanelRoot from "./PanelRoot.jsx";
 
 export default function App() {
-  return (
-    <>
-      <BrainToggle />
-    </>
-  );
+  const hash = window.location.hash.replace("#", "");
+
+  if (hash === "panel") {
+    return <PanelRoot />;
+  }
+
+  return <IconLauncher />;
 }

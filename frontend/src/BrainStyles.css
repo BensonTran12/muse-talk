@@ -1,132 +1,132 @@
-/*floating icon*/
-.brain-icon {
-  position: fixed;
-  top: 50%;
-  right: 6px;
-  transform: translateY(-50%);
-  width: 48px;
-  height: 48px;
- /* background: url("/brain.png") center/cover no-repeat;*/
-  border-radius: 50%;
-  cursor: pointer;
-  z-index: 2000;
-  transition: transform 0.25s ease;
-  box-shadow: 0 0 12px rgba(0,255,255,0.5);
-  z-index: 99999;
-  background-color: black;
-}
-.brain-icon:hover {
-  transform: translateY(-50%) scale(1.08);
-}
-.brain-icon.active {
-  transform: translateY(-50%) scale(1.15);
+:root {
+  --muted-purple: #5a4b74;
+  --vivid-crimson: #dc143c;
+  --blacksteel: #253439;
+  --cream: #f0f5f0;
+  --accent-cyan: #00eaff;
+  --accent-green: #a3ffb3;
+  --accent-yellow: #ffd85e;
+  --accent-red: #ff5a5a;
 }
 
-
-/* Overlay */
-.panel-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 10, 25, 0.55);
-  backdrop-filter: blur(3px);
-  z-index: 1990;
-}
-
-/* Slide Panel */
-.brain-panel {
-  position: fixed;
-  top: 0;
-  right: -360px;
+.panel-container {
   width: 360px;
-  height: 100vh;
-  background: linear-gradient(180deg,#0b0f2a 0%,#09162f 100%);
-  border-left: 2px solid #00eaff;
-  border-radius: 18px 0 0 18px;
-  z-index: 2001;
-  transition: right 0.28s ease;
+  height: 700px;
+  padding: 20px;
+  border-radius: 22px;
+  background: var(--blacksteel);
+  color: var(--cream);
   display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 99998; 
- 
-}
-.brain-panel.open {
-  right: 0;
-}
-.panel-overlay {
-  z-index: 99997;
-}
-.brain-panel:not(.open) {
-  border-left: none;
-  background: transparent !important;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
-
-.header { font-size: 1.2rem; margin-bottom: 6px; }
-.status.ok { color: #00ff81; }
-
-.hud {
-  font-size: 2.8rem;
-  margin: 6px 0 8px;
-  user-select: none;
+/* Title Row */
+.panel-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--vivid-crimson);
+  margin-bottom: 12px;
 }
-.hud .active {
-  color: #00eaff;
+
+.status {
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+.status.ok {
+  color: var(--accent-green);
   opacity: 1;
 }
-.hud div { opacity: 0.3 }
-.hud .mid {
-  display: flex;
-  justify-content: center;
-  gap: 2.2rem;
-}
 
-.output-row {
-  margin: 5px 0 8px;
+/* ARROWS */
+.brain-arrows {
+  width: 100%;
+  height: 170px;
   display: flex;
+  flex-direction: column;
   justify-content: center;
-  gap: 8px;
   align-items: center;
+  gap: 22px;
 }
 
-.train-btn {
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: #eee;
-  cursor: pointer;
-}
-.train-btn.recording {
-  background: #c50000;
-  color: white;
-  font-weight: bold;
-}
-
-.save-count { font-size: 1rem; font-weight: bold; }
-
-.graph {
-  margin: 6px 0 6px;
+.arrow-row {
   width: 100%;
-  border: 1px solid #00eaff;
-  border-radius: 6px;
+  display: flex;
+  justify-content: space-around;
 }
 
+.arrow {
+  font-size: 40px;
+  transition: 0.15s;
+  opacity: 0.3;
+}
+.arrow.active {
+  opacity: 1;
+  color: var(--accent-cyan);
+}
+.arrow:hover {
+  opacity: 0.8;
+}
+
+/* Graph */
+.eeg-box {
+  width: 100%;
+  height: 150px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 16px;
+  border: 2px solid rgba(255,255,255,0.08);
+  margin: 18px 0 10px 0;
+}
+
+/* Buttons */
+.main-btn {
+  width: 100%;
+  height: 50px;
+  border-radius: 14px;
+  background: var(--muted-purple);
+  border: none;
+  color: var(--cream);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.main-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+/* Output Row */
+.output-label {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+/* Legend */
 .legend {
-  font-size: 0.75rem;
-  margin-bottom: 10px;
+  font-size: 0.85rem;
+  opacity: 0.9;
+  gap: 4px;
 }
-.legend .a { color:#00eaff }
-.legend .b { color:#00ff90 }
-.legend .t { color:#ffdd00 }
-.legend .g { color:#ff3b3b }
 
-.connect-btn {
-  width: 100%;
-  padding: 6px;
-  border-radius: 8px;
-  background: #0f1b39;
-  border: 1px solid #00eaff;
-  cursor: pointer;
+.a { color: var(--accent-cyan); }
+.b { color: var(--accent-green); }
+.t { color: var(--accent-yellow); }
+.g { color: var(--accent-red); }
+
+/* Save count */
+.save-count {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--accent-green);
 }
-.connect-btn:hover {
-  background: #112049;
+
+/* Better spacing */
+.output-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
 }
