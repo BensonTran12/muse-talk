@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y supervisor && rm -rf /var/lib/apt/lists
 
 # Copy app and supervisor configs
 COPY app/ ./app
-COPY data/ ./data
+# COPY data/ ./data
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 

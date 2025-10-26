@@ -5,12 +5,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev": "vite",
     "build": "vite build",
     "start": "electron ."
   },
   "dependencies": {
-    "@abandonware/noble": "^1.9.2-15",
     "node-fetch": "^3.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
