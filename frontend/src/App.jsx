@@ -115,6 +115,7 @@
           }
         });
 
+        // presses key down
         if (!snapped) {
           const keyToPress = WASD_MAP[prediction];
           if (keyToPress) {
@@ -128,6 +129,53 @@
         }
       }
     }, [prediction, connected]);
+
+    // --- NEW EFFECT HOOK FOR MANUAL KEYBOARD INPUT ---
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      // Map the pressed key to a BCI direction
+      let newPrediction = null;
+      switch (event.key.toLowerCase()) {
+        case 'w':
+          newPrediction = 'UP';
+          break;
+        case 's':
+          newPrediction = 'DOWN';
+          break;
+        case 'a':
+          newPrediction = 'LEFT';
+          break;
+        case 'd':
+          newPrediction = 'RIGHT';
+          break;
+        default:
+          // Ignore other keys
+          return;
+      }
+
+      // Prevent the default browser action (like scrolling)
+      event.preventDefault();
+
+      // Only update prediction if the headset is "connected"
+      if (connected) {
+        setPrediction(newPrediction);
+        
+        // Optional: Reset to NEUTRAL shortly after to simulate a momentary thought/tap
+        setTimeout(() => {
+          setPrediction('NEUTRAL');
+        }, 100);
+      }
+    };
+
+    // Attach the event listener to the entire window
+    window.addEventListener('keydown', handleKeyPress);
+
+    // Clean up the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [connected]); // Re-attach if connected state changes
+// --- END NEW EFFECT HOOK ---
 
     // fake eeg line animator
     useEffect(() => {
