@@ -3,11 +3,12 @@ import requests
 import asyncio
 from datetime import datetime, timedelta
 from .cache_manager import update_cache
+import base64
 
 
 # from .env.backend
-LAMBDA_ENDPOINT = os.getenv('LAMBDA_ENDPOINT', 'https://example-lambda.amazonaws.com/prod/check_model')
-CHECK_INTERVAL = 3600 # every hour
+LAMBDA_ENDPOINT = os.getenv('LAMBDA_ENDPOINT', 'https://dai6vxt176.execute-api.us-east-1.amazonaws.com/soChopped67')
+CHECK_INTERVAL = 3600
 
 
 async def schedule_model_updates():
@@ -17,16 +18,15 @@ async def schedule_model_updates():
             response = requests.get(LAMBDA_ENDPOINT)
             if response.status_code == 200:
                 data = response.json()
-                if data.get('new_model_url'):
-                    model_url = data['new_model_url']
-                    print('[SageMakerSync] Found new model:', model_url)
-
-                    r = requests.get(model_url)
-                    if r.status_code == 200:
-                        temp_path = '/tmp/latest_model.pkl'
-                        with open(temp_path, 'wb') as f:
-                            f.write(r.content)
-                        update_cache(temp_path)
+                if 'body' in data :
+                    model_data = base64.b64decode(data['body'])
+                    temp_path = '/tmp/latest_model.joblib'
+                    with open(temp_path, 'wb') as f:
+                        f.write(model_data)
+                    print('[SageMakerSync] Model downloaded and cached.')
+                    update_cache(temp_path)
+                else:
+                    print('[SageMakerSync] No model data found in response.')
             else:
                 print('[SageMakerSync] Lambda response:', response.status_code)
         except Exception as e:
