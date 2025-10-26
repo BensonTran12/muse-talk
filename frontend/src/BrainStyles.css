@@ -208,44 +208,170 @@ html, body {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
-  color: #e0faff;
-  box-sizing: border-box;
+  justify-content: flex-start;
+  overflow: hidden;
+  width: 350px;
+  height: 620px; /* Fits without scroll */
+  overflow: hidden; /* No scrolling */
+  transform: scale(0.9); /* Shrinks everything evenly */
+  transform-origin: top center;
 }
 
-.header {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
+/* Title Row */
+.panel-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--vivid-crimson);
+  margin-bottom: 12px;
+}
+
+.status {
+  font-size: 1.1rem;
+  opacity: 0.7;
 }
 .status.ok {
-  color: #00ff81;
+  color: var(--accent-green);
+  opacity: 1;
 }
 
-/* --- Inactive View Styles --- */
-.inactive-view {
+/* ARROWS */
+.brain-arrows {
+  width: 100%;
+  height: 170px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  height: 450px; /* Fixed height for display consistency */
-  padding: 20px;
+  align-items: center;
+  gap: 22px;
+}
+
+.arrow-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+}
+
+.arrow {
+  font-size: 40px;
+  transition: 0.15s;
+  opacity: 0.3;
+}
+.arrow.active {
+  opacity: 1;
+  color: var(--accent-cyan);
+}
+.arrow:hover {
+  opacity: 0.8;
+}
+
+/* Graph */
+.eeg-box {
+  width: 95%;
+  height: 150px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 16px;
+  border: 2px solid rgba(255,255,255,0.08);
+  margin: 18px 0 10px 0;
+}
+
+/* Buttons */
+.main-btn {
+  width: 100%;
+  height: 50px;
+  border-radius: 14px;
+  background: var(--muted-purple);
+  border: none;
+  color: var(--cream);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.main-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+/* Output Row */
+.output-label {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+/* Legend */
+.legend {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  gap: 4px;
+}
+
+.a { color: var(--accent-cyan); }
+.b { color: var(--accent-green); }
+.t { color: var(--accent-yellow); }
+.g { color: var(--accent-red); }
+
+/* Save count */
+.save-count {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--accent-green);
+}
+
+/* Better spacing */
+.output-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+/* Base training button style (inherits main-btn) */
+.training-btn {
+  transition: background-color 0.25s, transform 0.25s;
+}
+
+/* Pulsing red when active */
+.training-btn.recording {
+  background-color: #dc143c;  /* vivid crimson */
+  animation: pulse 1.15s infinite ease-in-out;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Pulse animation */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* Counter — glowing red and futuristic */
+.record-counter {
+  margin-top: 8px;
+  font-size: 20px;
+  background: rgba(220, 20, 60, 0.18);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 800;
+  color: #dc143c;
   text-align: center;
-  color: #ccc;
-  flex-grow: 1;
+  width: fit-content;
+  align-self: center;
+  animation: glow 1.3s ease-in-out infinite alternate;
 }
-.inactive-view h2 {
-  color: #00eaff;
+
+/* Glow animation for counter */
+@keyframes glow {
+  from { box-shadow: 0 0 4px rgba(220,20,60,0.6); }
+  to   { box-shadow: 0 0 14px rgba(220,20,60,1); }
 }
-.sequence-display {
-  margin-top: 10px;
-  padding: 8px;
-  border: 1px dashed #555;
-  border-radius: 6px;
-  width: 90%;
-  background-color: rgba(0,0,0,0.3);
+/* FIX SCROLL + FORCE PERFECT FIT */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* ✅ Removes all scrollbars */
 }
 .current-pred {
     font-style: italic;
