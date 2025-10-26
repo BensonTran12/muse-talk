@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: muse-backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/data/cache:/app/backend/data/cache
+      - ./backend/data/models:/app/data/models
+    environment:
+      - ENV=production
+    networks:
+      - muse-net
+
+  frontend:
+    build: ./frontend
+    container_name: muse-frontend
+    ports:
+      - "5175:5175"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - backend
+    networks:
+      - muse-net
+    command: npm run dev
+
+networks:
+  muse-net:
+    driver: bridge
