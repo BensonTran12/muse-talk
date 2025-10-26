@@ -14,9 +14,6 @@ const COMMAND_MAP = {
   NEUTRAL: 'NONE',
 };
 
-const SNAP_DISTANCE = 80; // Cursor must be within 80px to snap
-const MOCK_INTERVAL = 700; // Time between fake BCI predictions
-
 // wheel data structure
 const WHEEL_DATA = {
   ROOT: {
@@ -73,12 +70,7 @@ const WHEEL_DATA = {
     ],
   },
 };
-// aim assist - distance calculator
-const calculateDistance = (p1, p2) => {
-  const dx = p1.x - p2.x;
-  const dy = p1.y - p2.y;
-  return Math.sqrt(dx * dx + dy * dy);
-};
+
 
 // rotation functionality
 const getRotation = (numItems, index) => {
@@ -148,12 +140,6 @@ export default function App() {
   const [connected, setConnected] = useState(false);
   const [trainingMode, setTrainingMode] = useState(false);
   const [saved, setSaved] = useState(0);
-
-  // aim assist states + cursor control
-  const [cursor, setCursor] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const targetRefs = useRef({});
-  const targetPositions = useRef([]);
-  const mockRef = useRef(null); // holds mock interval
 
   // connect or bail
   // Wheel/Navigation States
