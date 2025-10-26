@@ -1,31 +1,49 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
-import joblib
-from preprocess import preprocess_eeg
+#start to deployment
+sagemaker_session = sagemaker.Session()
+bucket_name="so-chopped-bucket-67"
+prefix="so-chopped-ai"
+role=sagemaker.get_execution_role()
 
-# Step 1: Load dataset
-df = pd.read_csv("eeg_training_data.csv")
+#notsure what this is
+# buf=io.BytesIO()
+# smac.write_numpy_to_dense_tensor(buf,X_train,y_train)
+# buf.seek(0) 
 
-# Step 2: Preprocess using helper module
-X, y, encoder, pca = preprocess_eeg(df)  # or X, y, _, encoder, pca if 5 returns
-print("✅ Preprocessing done. Feature shape:", X.shape)
+#might need to recreate bucket if errrors not sure why
+key = "muse-ml"
 
-# Step 3: Split data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+boto3.resource('s3').Bucket(bucket_name).Object(os.path.join(prefix, 'train',key)).upload_fileobj(buf)
 
-# Step 4: Train model
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
+s3_train_data=f"s3://{bucket_name}/{prefix}/train/{key}"
 
-# Step 5: Evaluate
-y_pred = model.predict(X_test)
-print("Accuracy:", accuracy_score(y_test, y_pred))
-print(classification_report(y_test, y_pred, target_names=encoder.classes_))
+print("data uploaded",s3_train_data)
+#because of this code you can basically see whats been updated to the bucket
+ 
+output_location=f"s3://{bucket_name}/{prefix}/output"
+#output_location  check this line I think this guy just used as a print statement so omit as you please
 
-# Step 6: Save model, encoder, and PCA
-joblib.dump(model, "model.joblib")
-joblib.dump(encoder, "encoder.joblib")
-joblib.dump(pca, "pca.joblib")
-print("✅ Model, encoder, and PCA saved successfully")
+container=sagemaker.image_uris_retrieve("so-chopped-ai",boto3.Session().region_name)
+
+#check this
+randomForestRegression=sagemaker.estimator.Estimator(container,role,instance_count=1,instance_type="ml.c4.xlarge",outout_path=output_location,sagemaker_session=sagemaker_session)
+
+#check this
+randomForestRegression.set.hyperparameters(feature_dim=1,predictor_type="regressor",mini_batch_size=4,epochs=6,num_models=32,loss="absolute_loss")
+
+ 
+linear.fit({"train":s3_train_data})
+
+#deploy the model
+so_chopped_model=linear.deploy(initial_instance_count=1,instance_type="ml.m4.xlarge")
+
+#after this check inference endpoints to see if ur up on the gui
+
+#here are some ml test idk if this is true
+# so_chopped_model.serializer=sagemaker.serializers.CSVSerializer()
+# so_chopped_model.deserializers=sagemaker.deserializers.JSONDeserializer()
+
+# results=so_chopped_model.predict(X_test)
+
+
+
+
