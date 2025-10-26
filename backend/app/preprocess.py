@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.decomposition import PCA
 import numpy as np
+
 # Load the CSV
 df = pd.read_csv("combined_data.csv") #add path to whatever file is being used
 X = df[["alpha", "beta", "theta", "gamma"]].values
