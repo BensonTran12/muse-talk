@@ -1,98 +1,135 @@
-// BCI UI stuff. fake data rn.
-import React, { useState, useEffect, useRef } from "react";
-import "./App.css";
+  // BCI UI stuff. fake data rn.
+  import React, { useState, useEffect, useRef } from "react";
+  import "./App.css";
 
-// fake model classes. real later
-const DIR = ["UP", "DOWN", "LEFT", "RIGHT", "NEUTRAL"];
+  // fake model classes. real later
+  const DIR = ["UP", "DOWN", "LEFT", "RIGHT", "NEUTRAL"];
 
-// maps data to directional inputs
-const WASD_MAP = {
-  UP: "w",
-  DOWN: "s",
-  LEFT: "a",
-  RIGHT: "d",
-  NEUTRAL: null,
-};
-
-export default function App() {
-  const [status, setStatus] = useState("Disconnected");
-  const [prediction, setPrediction] = useState("…thinking…");
-  const [connected, setConnected] = useState(false);
-  const [trainingMode, setTrainingMode] = useState(false);
-  const [saved, setSaved] = useState(0);
-  const graphRef = useRef(null);
-  //const fpsRef = useRef(0);
-  //const lastFrameRef = useRef(Date.now());
-  //const [history, setHistory] = useState([]);
-
-
-
-  const mockRef = useRef(null); // holds mock interval
-
-  // connect or bail
-  const toggleConnect = () => {
-    if (connected) {
-      // kill stream
-      clearInterval(mockRef.current);
-      setConnected(false);
-      setStatus("Disconnected");
-      setPrediction("…thinking…");
-    } else {
-      // fake connect
-      setConnected(true);
-      setStatus("Connected ");
-      startMockPredictions();
-    }
+  // maps data to directional inputs
+  const WASD_MAP = {
+    UP: "w",
+    DOWN: "s",
+    LEFT: "a",
+    RIGHT: "d",
+    NEUTRAL: null,
   };
 
-  // fake brain loop. swap out later w/ real inference
-  const startMockPredictions = () => {
-    if (mockRef.current) clearInterval(mockRef.current);
-    mockRef.current = setInterval(() => {
-      const r = DIR[Math.floor(Math.random() * DIR.length)];
-      setPrediction(r);
-      setHistory(h => [r, ...h].slice(0, 6)); // last 6 shown
+  const SNAP_DISTANCE = 80; // Cursor must be within 80px to snap
+  const MOCK_INTERVAL = 700; // Time between fake BCI predictions
+
+  // aim assist - distance calculator
+  const calculateDistance = (p1, p2) => {
+    const dx = p1.x - p2.x;
+    const dy = p1.y - p2.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  export default function App() {
+    const [status, setStatus] = useState("Disconnected");
+    const [prediction, setPrediction] = useState("…thinking…");
+    const [connected, setConnected] = useState(false);
+    const [trainingMode, setTrainingMode] = useState(false);
+    const [saved, setSaved] = useState(0);
+
+    // Cursor aim assist
+    const [cursor, setCursor] = useState({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    });
+
+    const graphRef = useRef(null);
+    const mockRef = useRef(null);
+    const targetRefs = useRef({});
+    const targetPositions = useRef([]);
+
+    // connect or bail
+    const toggleConnect = () => {
+      if (connected) {
+        clearInterval(mockRef.current);
+        setConnected(false);
+        setStatus("Disconnected");
+        setPrediction("…thinking…");
+      } else {
+        setConnected(true);
+        setStatus("Connected");
+        startMockPredictions();
+      }
+    };
+
+    // fake brain loop. swap out later w/ real inference
+    const startMockPredictions = () => {
+      if (mockRef.current) clearInterval(mockRef.current);
+
+      mockRef.current = setInterval(() => {
+        const r = DIR[Math.floor(Math.random() * DIR.length)];
+        setPrediction(r);
+        if (trainingMode) setSaved(prev => prev + 1);
+      }, MOCK_INTERVAL);
+    };
+
+    // Update aim assist target positions
+    useEffect(() => {
+      const updateTargetPositions = () => {
+        targetPositions.current = Object.keys(targetRefs.current)
+          .map(key => {
+            const node = targetRefs.current[key];
+            if (!node) return null;
+            const rect = node.getBoundingClientRect();
+            return {
+              id: key,
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2
+            };
+          })
+          .filter(Boolean);
+      };
+
+      updateTargetPositions();
+      window.addEventListener("resize", updateTargetPositions);
+      return () => window.removeEventListener("resize", updateTargetPositions);
+    }, []);
+
+    // track mouse for aim assist simulation
+    useEffect(() => {
+      const updateCursor = e => {
+        setCursor({ x: e.clientX, y: e.clientY });
+      };
+      window.addEventListener("mousemove", updateCursor);
+      return () => window.removeEventListener("mousemove", updateCursor);
+    }, []);
+
+    // Main prediction handler - snapping or keyboard dispatch
+    useEffect(() => {
+      if (!connected || prediction === "…thinking…") return;
+
       if (trainingMode) setSaved(prev => prev + 1);
-    }, 700);
-  };
 
-  // cleanup when component goes poof
-  useEffect(() => {
-    return () => clearInterval(mockRef.current);
-  }, []);
+      if (prediction !== "NEUTRAL") {
+        let snapped = false;
 
-  useEffect(() => {
-    if (!connected || prediction === "…thinking…") return;
+        targetPositions.current.forEach(target => {
+          const dist = calculateDistance(cursor, target);
+          if (dist < SNAP_DISTANCE) {
+            setCursor({ x: target.x, y: target.y });
+            snapped = true;
+          }
+        });
 
-    const keyToPress = WASD_MAP[prediction];
+        if (!snapped) {
+          const keyToPress = WASD_MAP[prediction];
+          if (keyToPress) {
+            const down = new KeyboardEvent("keydown", { key: keyToPress });
+            document.dispatchEvent(down);
+            setTimeout(() =>
+              document.dispatchEvent(new KeyboardEvent("keyup", { key: keyToPress })),
+              50
+            );
+          }
+        }
+      }
+    }, [prediction, connected]);
 
-    if (keyToPress) {
-      console.log(`BCI Command: ${prediction}. Dispatching keydown event for: ${keyToPress.toUpperCase()}`);
-      
-      // change later to work with 
-      
-      const event = new KeyboardEvent('keydown', {
-        key: keyToPress,
-        code: keyToPress.toUpperCase(),
-        bubbles: true
-      });
-      document.dispatchEvent(event);
-
-      // Optionally dispatch 'keyup' to simulate a tap
-      const keyupEvent = new KeyboardEvent('keyup', {
-        key: keyToPress,
-        code: keyToPress.toUpperCase(),
-        bubbles: true
-      });
-      setTimeout(() => document.dispatchEvent(keyupEvent), 50);
-
-    } else if (prediction === "NEUTRAL") {
-      console.log("BCI Command: NEUTRAL. No key dispatched.");
-    }
-  }, [prediction, connected]); // Reruns whenever prediction changes
-
-  // fake eeg line animator
-// fake EEG multi-band animator
+    // fake eeg line animator
     useEffect(() => {
       const canvas = graphRef.current;
       if (!canvas) return;
@@ -133,7 +170,8 @@ export default function App() {
           ctx.strokeStyle = colors[k];
           ctx.beginPath();
           data[k].forEach((v, i) => {
-            const y = H - (v / 100) * H;
+            const min = 30, max = 110;
+            const y = H - ((v - min) / (max - min)) * H;
             ctx.lineTo(i, y);
           });
           ctx.stroke();
@@ -152,179 +190,87 @@ export default function App() {
       loop();
     }, [connected]);
 
+    // cleanup when component goes poof
+    useEffect(() => {
+      return () => clearInterval(mockRef.current);
+    }, []);
 
-  // start/end training mode
-  const toggleTraining = () => {
-    setTrainingMode(!trainingMode);
-    if (!trainingMode) setSaved(0); // reset counter
-  };
+    const toggleTraining = () => {
+      setSaved(0);
+      setTrainingMode(prev => !prev);
+    };
 
-  // gives a rad direction wheel vibe
- // const wheelPos = {
-  //  transform: `rotate(${getRotation(prediction)}deg)`,
- //   transition: "0.2s ease-out"
- // };
-  // highlight active direction
-  const highlight = active => ({
-    fontSize: "3.2rem",
-    opacity: active ? 1 : 0.35,
-    transition: "0.2s",
-    color: active ? "#00eaff" : "#666"
-  });
+    // highlight active direction like before
+    const highlight = (active) => ({
+      fontSize: "3.2rem",
+      opacity: active ? 1 : 0.35,
+      transition: "0.2s",
+      color: active ? "#00eaff" : "#666"
+    });
 
 
-  return (
-    <div style={styles.container}>
-      {/* header bar */}
-      <div style={styles.header}>
-        <span style={styles.brand}>🧠 MuseTalk LIVE</span>
-        <span>{status}</span>
-      </div>
+    return (
+      <div style={styles.container}>
+        <h1>BCI Brain Control</h1>
 
-      <h1>BCI Brain Control </h1>
+        <div style={{ ...styles.statusDot, backgroundColor: connected ? "lime" : "gray" }} />
 
-      {/* lil dot to show live connection */}
-      <div style={{...styles.statusDot, backgroundColor: connected ? "lime" : "gray"}} />
+        <p>Status: <strong>{status}</strong></p>
 
-      <p>Status: <strong>{status}</strong></p>
+        <button style={styles.button} onClick={toggleConnect}>
+          {connected ? "Disconnect" : "Connect Headset"}
+        </button>
 
-      {/* connect / disconnect */}
-      <button style={styles.button} onClick={toggleConnect}>
-        {connected ? "Disconnect" : "Connect Headset"}
-      </button>
+        <div style={styles.controlRow}>
+          <h2>Output: {prediction}</h2>
 
-      {/* the wheel 
-      <div style={styles.wheelContainer}>
-        <img
-          src="https://png.pngtree.com/png-vector/20230220/ourlarge/pngtree-spin-wheel-vector-illustration-png-image_6606505.png"
-          alt="wheel"
-          style={{...styles.wheelImg, ...wheelPos}}
-        />
-      </div> */}
-      {/* direction hud */}
-      <div style={styles.hud}>
-        <div style={highlight(prediction === "UP")}>↑</div>
-        <div style={styles.midRow}>
-         <div style={highlight(prediction === "LEFT")}>←</div>
-         <div style={highlight(prediction === "NEUTRAL")}>●</div>
-         <div style={highlight(prediction === "RIGHT")}>→</div>
+          <button
+            style={{
+              ...styles.button,
+              backgroundColor: trainingMode ? "#ffcc00" : "#ddd"
+            }}
+            onClick={toggleTraining}
+            disabled={!connected}
+          >
+            {trainingMode ? "Recording..." : "Start Training"}
+          </button>
+
+          {trainingMode && <span style={styles.savedText}>Saved: {saved}</span>}
         </div>
-        <div style={highlight(prediction === "DOWN")}>↓</div>
+
+        {/* direction hud restored */}
+        <div style={styles.hud}>
+          <div style={highlight(prediction === "UP")}>↑</div>
+
+          <div style={styles.midRow}>
+            <div style={highlight(prediction === "LEFT")}>←</div>
+            <div style={highlight(prediction === "NEUTRAL")}>●</div>
+            <div style={highlight(prediction === "RIGHT")}>→</div>
+          </div>
+
+          <div style={highlight(prediction === "DOWN")}>↓</div>
+        </div>
+
+        <canvas ref={graphRef} width="700" height="200" style={styles.canvas} />
+
+        <div style={styles.legend}>
+          <span style={{ color: "#00eaff" }}>Alpha</span> ·{" "}
+          <span style={{ color: "#00ff90" }}>Beta</span> ·{" "}
+          <span style={{ color: "#ffdd00" }}>Theta</span> ·{" "}
+          <span style={{ color: "#ff3b3b" }}>Gamma</span>
+        </div>
       </div>
-
-
-      {/* thought output */}
-      <h2>Output: {prediction}</h2>
-
-      {/* training mode toggle */}
-      <button
-        style={{...styles.button, backgroundColor: trainingMode ? "#ffcc00" : "#ddd"}}
-        onClick={toggleTraining}
-        disabled={!connected}
-      >
-        {trainingMode ? " Recording..." : "Start Training"}
-      </button>
-
-      {/* how many samples logged */}
-      {trainingMode && (
-        <p>Saved: {saved}</p>
-      )}   
-      {/* eeg graph */}
-    <canvas
-      ref={graphRef}
-      width="700"
-      height="190"
-      style={styles.canvas}
-    />
-
-    <div style={styles.legend}>
-      <span style={{color:"#00eaff"}}>Alpha</span> ·{" "}
-      <span style={{color:"#00ff90"}}>Beta</span> ·{" "}
-      <span style={{color:"#ffdd00"}}>Theta</span> ·{" "}
-      <span style={{color:"#ff3b3b"}}>Gamma</span>
-    </div>
-
-
-    </div>
-  );
-}
-
-// stupid helper bc wheel needs angles
-//function getRotation(dir) {
- // switch (dir) {
-  //  case "UP": return 0;
-  //  case "RIGHT": return 90;
-   // case "DOWN": return 180;
-   // case "LEFT": return 270;
-   // default: return 0; // neutral
- // }
-//}
-
-// UI junk. fine for now
-const styles = {
-  container: {
-    textAlign: "center",
-    padding: "2rem",
-    fontFamily: "Arial, sans-serif"
-  },
-  button: {
-    fontSize: "1.1rem",
-    margin: "0.7rem",
-    padding: "0.6rem 1.2rem",
-    cursor: "pointer",
-    borderRadius: "6px"
-  },
-  statusDot: {
-    width: "15px",
-    height: "15px",
-    borderRadius: "50%",
-    margin: "0 auto",
-    marginBottom: "10px"
-  },
-  wheelContainer: {
-    marginTop: "2rem",
-    display: "flex",
-    justifyContent: "center"
-  },
-  wheelImg: {
-    width: "120px",
-    height: "120px"
-  },
-    hud: {
-    marginTop: "1.8rem"
-  },
-  midRow: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  header: {
-    width: "100%",
-    padding: "0.5rem",
-    display: "flex",
-    justifyContent: "space-between",
-    background: "#222",
-    color: "#0ff",
-    fontWeight: "600",
-    fontSize: "1rem"
-  },
-  brand: { fontSize: "1.1rem" },
-  canvas: {
-    marginTop: "1rem",
-    border: "1px solid #0ff",
-    borderRadius: "6px"
-  },
-  historyBox: {
-    marginTop: "0.8rem",
-    fontSize: "1.3rem"
-  },
-  histItem: {
-    margin: "0 6px",
-    color: "#00eaff"
-  },
-  legend: {
-  marginTop: "6px",
-  fontSize: "0.9rem",
-  fontWeight: "600"
+    );
   }
-};
+
+  const styles = {
+    container: { textAlign: "center", padding: "2rem", fontFamily: "Arial, sans-serif" },
+    button: { fontSize: "1.1rem", padding: "0.6rem 1.2rem", margin: "0.7rem", borderRadius: "6px", cursor: "pointer" },
+    statusDot: { width: "16px", height: "16px", borderRadius: "50%", margin: "10px auto" },
+    canvas: { marginTop: "1rem", border: "1px solid #0ff", borderRadius: "6px" },
+    legend: { marginTop: "6px", fontSize: "0.9rem", fontWeight: "600" },
+    controlRow: { display: "flex", justifyContent: "center", alignItems: "center", gap: "1.5rem" },
+    savedText: { fontSize: "1.2rem", fontWeight: "600", color: "#333" },
+    hud: { marginTop: "1.2rem", userSelect: "none"}, midRow: {  display: "flex",  justifyContent: "center",  alignItems: "center",  gap: "3rem"}
+
+  };
