@@ -51,8 +51,9 @@ export default function App() {
     mockRef.current = setInterval(() => {
       const r = DIR[Math.floor(Math.random() * DIR.length)];
       setPrediction(r);
-      setHistory(h => [r, ...h].slice(0, 6)); // last 6 shown
-      if (trainingMode) setSaved(prev => prev + 1);
+      if (trainingMode) {
+        setSaved(prev => prev + 1);
+      }
     }, 700);
   };
 
@@ -61,16 +62,18 @@ export default function App() {
     return () => clearInterval(mockRef.current);
   }, []);
 
-  useEffect(() => {
-    if (!connected || prediction === "…thinking…") return;
+useEffect(() => {
+  if (!connected || prediction === "…thinking…") return;
+
+    if (trainingMode) {
+      setSaved(prev => prev + 1);
+    }
 
     const keyToPress = WASD_MAP[prediction];
 
     if (keyToPress) {
       console.log(`BCI Command: ${prediction}. Dispatching keydown event for: ${keyToPress.toUpperCase()}`);
-      
-      // change later to work with 
-      
+
       const event = new KeyboardEvent('keydown', {
         key: keyToPress,
         code: keyToPress.toUpperCase(),
@@ -78,7 +81,6 @@ export default function App() {
       });
       document.dispatchEvent(event);
 
-      // Optionally dispatch 'keyup' to simulate a tap
       const keyupEvent = new KeyboardEvent('keyup', {
         key: keyToPress,
         code: keyToPress.toUpperCase(),
@@ -89,7 +91,9 @@ export default function App() {
     } else if (prediction === "NEUTRAL") {
       console.log("BCI Command: NEUTRAL. No key dispatched.");
     }
-  }, [prediction, connected]); // Reruns whenever prediction changes
+
+  }, [prediction, connected, trainingMode]); //  Added trainingMode to deps
+
 
   // fake eeg line animator
 // fake EEG multi-band animator
@@ -153,10 +157,9 @@ export default function App() {
     }, [connected]);
 
 
-  // start/end training mode
   const toggleTraining = () => {
-    setTrainingMode(!trainingMode);
-    if (!trainingMode) setSaved(0); // reset counter
+    setSaved(0);  // always reset when training starts
+    setTrainingMode(prev => !prev);
   };
 
   // gives a rad direction wheel vibe
@@ -213,27 +216,34 @@ export default function App() {
       </div>
 
 
-      {/* thought output */}
-      <h2>Output: {prediction}</h2>
+    {/* Output + Control Bar */}
+    <div style={styles.controlRow}>
+      <h2 style={{ marginRight: "1rem" }}>
+        Output: <span style={{fontWeight: 700}}>{prediction}</span>
+      </h2>
 
-      {/* training mode toggle */}
       <button
-        style={{...styles.button, backgroundColor: trainingMode ? "#ffcc00" : "#ddd"}}
+        style={{
+          ...styles.button,
+          backgroundColor: trainingMode ? "#ffcc00" : "#ddd"
+        }}
         onClick={toggleTraining}
         disabled={!connected}
       >
-        {trainingMode ? " Recording..." : "Start Training"}
+        {trainingMode ? "Recording..." : "Start Training"}
       </button>
 
-      {/* how many samples logged */}
       {trainingMode && (
-        <p>Saved: {saved}</p>
-      )}   
-      {/* eeg graph */}
+        <span style={styles.savedText}>Saved: {saved}</span>
+      )}
+    </div>
+
+
+    {/* eeg graph */}
     <canvas
       ref={graphRef}
       width="700"
-      height="190"
+      height="200"
       style={styles.canvas}
     />
 
@@ -326,5 +336,17 @@ const styles = {
   marginTop: "6px",
   fontSize: "0.9rem",
   fontWeight: "600"
-  }
+  },
+  controlRow: {
+  marginTop: "1.5rem",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "1rem"
+},
+savedText: {
+  fontSize: "1.2rem",
+  fontWeight: "600",
+  color: "#333"
+}
 };
