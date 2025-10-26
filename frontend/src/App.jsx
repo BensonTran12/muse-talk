@@ -1,6 +1,6 @@
 import React from "react";
-import BrainUI from "./BrainUI.jsx";
-import BrainToggle from "./BrainToggle.jsx";
+import IconLauncher from "./IconLauncher.jsx";
+import PanelRoot from "./PanelRoot.jsx";
 
 const SNAP_DISTANCE = 80; // Cursor must be within 80 pixels of a target center to snap.
 const MOCK_INTERVAL = 700; // Time between fake BCI predictions
@@ -13,9 +13,11 @@ const calculateDistance = (p1, p2) => {
 };
 
 export default function App() {
-  return (
-    <>
-      <BrainToggle />
-    </>
-  );
+  const hash = window.location.hash.replace("#", "");
+
+  if (hash === "panel") {
+    return <PanelRoot />;
+  }
+
+  return <IconLauncher />;
 }

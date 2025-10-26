@@ -1,10 +1,17 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App.jsx";
+import IconLauncher from "./IconLauncher.jsx";
+import PanelRoot from "./PanelRoot.jsx";
 
-createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+console.log("✅ main.jsx loaded", window.location.pathname);
+
+const rootEl = document.getElementById("root");
+
+if (!rootEl) {
+  console.error("❌ No #root element found");
+}
+
+const isPanel = window.location.pathname.includes("panel");
+const App = isPanel ? <PanelRoot /> : <IconLauncher />;
+
+createRoot(rootEl).render(App);
