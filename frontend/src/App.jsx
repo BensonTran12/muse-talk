@@ -224,16 +224,17 @@
         <div style={styles.controlRow}>
           <h2>Output: {prediction}</h2>
 
-          <button
-            style={{
-              ...styles.button,
-              backgroundColor: trainingMode ? "#ffcc00" : "#ddd"
-            }}
-            onClick={toggleTraining}
-            disabled={!connected}
-          >
-            {trainingMode ? "Recording..." : "Start Training"}
-          </button>
+        <button
+          style={{
+            ...styles.button,
+            ...(trainingMode ? styles.recordingButton : styles.trainingButton)
+          }}
+          onClick={toggleTraining}
+          disabled={!connected}
+        >
+          {trainingMode ? "Recording..." : "Start Training"}
+        </button>
+
 
           {trainingMode && <span style={styles.savedText}>Saved: {saved}</span>}
         </div>
@@ -263,14 +264,105 @@
     );
   }
 
-  const styles = {
-    container: { textAlign: "center", padding: "2rem", fontFamily: "Arial, sans-serif" },
-    button: { fontSize: "1.1rem", padding: "0.6rem 1.2rem", margin: "0.7rem", borderRadius: "6px", cursor: "pointer" },
-    statusDot: { width: "16px", height: "16px", borderRadius: "50%", margin: "10px auto" },
-    canvas: { marginTop: "1rem", border: "1px solid #0ff", borderRadius: "6px" },
-    legend: { marginTop: "6px", fontSize: "0.9rem", fontWeight: "600" },
-    controlRow: { display: "flex", justifyContent: "center", alignItems: "center", gap: "1.5rem" },
-    savedText: { fontSize: "1.2rem", fontWeight: "600", color: "#333" },
-    hud: { marginTop: "1.2rem", userSelect: "none"}, midRow: {  display: "flex",  justifyContent: "center",  alignItems: "center",  gap: "3rem"}
+const styles = {
+  container: {
+    minHeight: "100vh",
+    paddingTop: "1rem",
+    paddingBottom: "1.5rem",
+    fontFamily: "Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+    background: "radial-gradient(circle at 50% -30%, #0d1b2a, #000000 85%)",
+    color: "#e0faff",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "0.7rem"
+  },
 
-  };
+  button: {
+    fontSize: "1.1rem",
+    padding: "0.55rem 1.1rem",
+    borderRadius: "10px",
+    cursor: "pointer",
+    border: "1px solid #00eaff",
+    background: "rgba(0,150,200,0.18)",
+    color: "#e0faff",
+    transition: "all 0.18s ease-in-out",
+    fontWeight: "600"
+  },
+
+  trainingButton: {
+    border: "2px solid #00eaff",
+    background: "rgba(0,150,200,0.4)",
+    boxShadow: "0 0 12px rgba(0,200,255,0.6)"
+  },
+
+  recordingButton: {
+    background: "rgba(220,0,0,0.7)",
+    border: "2px solid #ff4747",
+    color: "#fff",
+    boxShadow: "0 0 16px rgba(255,60,60,0.9)"
+  },
+
+  statusDot: {
+    width: "12px",
+    height: "12px",
+    borderRadius: "50%",
+    border: "2px solid #00eaff",
+    boxShadow: "0 0 8px #00eaff",
+    marginBottom: "0.2rem"
+  },
+
+  controlRow: {
+    width: "80%",
+    maxWidth: "820px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "1rem",
+    padding: "0.6rem",
+    borderRadius: "12px",
+    background: "rgba(0, 60, 90, 0.28)",
+    border: "1px solid rgba(0,200,255,0.25)",
+    backdropFilter: "blur(6px)",
+    marginTop: "0.4rem"
+  },
+
+  savedText: {
+    fontSize: "1.15rem",
+    fontWeight: "600",
+    color: "#ffd447",
+    textShadow: "0 0 6px rgba(255,200,60,0.45)"
+  },
+
+  hud: {
+    marginTop: "0.2rem",
+    fontSize: "3.0rem",
+    userSelect: "none",
+    textShadow: "0 0 10px rgba(0,200,255,0.5)"
+  },
+
+  midRow: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "3rem"
+  },
+
+  canvas: {
+    marginTop: "0.7rem",
+    border: "1px solid rgba(0,200,255,0.35)",
+    borderRadius: "10px",
+    width: "90%",
+    maxWidth: "860px",
+    height: "200px",
+    background: "rgba(0,25,45,0.55)",
+    boxShadow: "0 0 14px rgba(0,200,255,0.15)"
+  },
+
+  legend: {
+    marginTop: "4px",
+    fontSize: "0.95rem",
+    fontWeight: "600",
+    opacity: 0.85
+  }
+};

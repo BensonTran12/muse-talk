@@ -56,8 +56,8 @@ button:focus-visible {
 
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    background: radial-gradient(circle at 50% -20%, #0d1b2a 0%, #000000 90%);
+    color: #e0faff;
   }
   a:hover {
     color: #747bff;
@@ -66,3 +66,4 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
