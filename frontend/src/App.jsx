@@ -131,6 +131,16 @@ const renderWheelLayer = (wheelKey, index, totalLayers, layerIndex) => {
   );
 };
 
+const SNAP_DISTANCE = 80; // Cursor must be within 80 pixels of a target center to snap.
+const MOCK_INTERVAL = 700; // Time between fake BCI predictions
+
+// --- aim assist - calculates distance between cursor and UI element ---
+const calculateDistance = (p1, p2) => {
+  const dx = p1.x - p2.x;
+  const dy = p1.y - p2.y;
+  return Math.sqrt(dx * dx + dy * dy);
+};
+
 export default function App() {
   // BCI states
   const [status, setStatus] = useState("Disconnected");
@@ -139,6 +149,13 @@ export default function App() {
   const [trainingMode, setTrainingMode] = useState(false);
   const [saved, setSaved] = useState(0);
 
+  // aim assist states + cursor control
+  const [cursor, setCursor] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const targetRefs = useRef({});
+  const targetPositions = useRef([]);
+  const mockRef = useRef(null); // holds mock interval
+
+  // connect or bail
   // Wheel/Navigation States
   const [activeWheelKey, setActiveWheelKey] = useState("ROOT");
   const [history, setHistory] = useState([]);
@@ -209,7 +226,7 @@ export default function App() {
   };
 
   // fake brain loop. swap out later w/ real inference
-  const startMockPredictions = () => {
+const startMockPredictions = () => {
     if (mockRef.current) clearInterval(mockRef.current);
 
     mockRef.current = setInterval(() => {
@@ -219,36 +236,94 @@ export default function App() {
     }, MOCK_INTERVAL);
   };
 
-  // Update aim assist target positions
+// 1. Hook to recalculate target positions on mount/resize
   useEffect(() => {
+    // Function to calculate target positions
     const updateTargetPositions = () => {
-      targetPositions.current = Object.keys(targetRefs.current)
-        .map(key => {
-          const node = targetRefs.current[key];
-          if (!node) return null;
+      targetPositions.current = [];
+      Object.keys(targetRefs.current).forEach(key => {
+        const node = targetRefs.current[key];
+        if (node) {
           const rect = node.getBoundingClientRect();
-          return {
+          targetPositions.current.push({
             id: key,
             x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2
-          };
-        })
-        .filter(Boolean);
+            y: rect.top + rect.height / 2,
+            rect: rect
+          });
+        }
+      });
     };
 
+    // Run once and on resize
     updateTargetPositions();
-    window.addEventListener("resize", updateTargetPositions);
-    return () => window.removeEventListener("resize", updateTargetPositions);
-  }, []);
+    window.addEventListener('resize', updateTargetPositions);
+    return () => window.removeEventListener('resize', updateTargetPositions);
+  }, [connected]); // Recalc when connected elements are visible
 
-  // track mouse for aim assist simulation
+    // 2. Hook to track the user's cursor position
   useEffect(() => {
-    const updateCursor = e => {
+    const updateCursor = (e) => {
       setCursor({ x: e.clientX, y: e.clientY });
     };
-    window.addEventListener("mousemove", updateCursor);
-    return () => window.removeEventListener("mousemove", updateCursor);
+    window.addEventListener('mousemove', updateCursor);
+    return () => window.removeEventListener('mousemove', updateCursor);
   }, []);
+
+  // Function: Runs the snap-to-target check
+  const snapToTarget = (currentCursor) => {
+    let closestTarget = null;
+    let minDistance = SNAP_DISTANCE;
+
+    targetPositions.current.forEach(target => {
+      const distance = calculateDistance(currentCursor, target);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestTarget = target;
+      }
+    });
+
+    if (closestTarget) {
+      console.log(`AIM ASSIST: Snapping to ${closestTarget.id}`);
+      
+      // In a real Electron app, this is where you send the IPC command:
+      // ipcRenderer.send('move-cursor', closestTarget.x, closestTarget.y);
+      
+      // For this browser simulation, we just update the internal cursor state
+      setCursor({ x: closestTarget.x, y: closestTarget.y });
+
+      return true; // Snap occurred
+    }
+    return false; // No snap
+  };
+
+  // 3. MAIN EFFECT HOOK: BCI Prediction -> Command Execution
+  useEffect(() => {
+    if (!connected || prediction === "…thinking…" || prediction === "NEUTRAL") return;
+
+    // --- SNAP CHECK ---
+    const snapped = snapToTarget(cursor);
+
+    if (snapped) {
+      // If snap occurred, we're done; skip WASD simulation
+      return;
+    }
+
+    // --- WASD DISPATCH (if no snap) ---
+    const keyToPress = WASD_MAP[prediction];
+    
+    if (keyToPress) {
+      console.log(`BCI Command: ${prediction}. Dispatching keydown for: ${keyToPress.toUpperCase()}`);
+      
+      // Simulate keydown event
+      const event = new KeyboardEvent('keydown', { key: keyToPress, bubbles: true });
+      document.dispatchEvent(event);
+
+      // Simulate keyup event after a short delay
+      const keyupEvent = new KeyboardEvent('keyup', { key: keyToPress, bubbles: true });
+      setTimeout(() => document.dispatchEvent(keyupEvent), 50);
+    }
+  }, [prediction, connected, cursor]); // Dependencies for re-run
 
   // Main prediction handler - snapping or command dispatch
   useEffect(() => {
@@ -257,141 +332,37 @@ export default function App() {
     // Convert BCI prediction to a command type
     const command = COMMAND_MAP[prediction];
 
-    if (command && command !== 'NONE') {
-      handleCommand(command);
-    }
-
-    // aim assist 
-    if (prediction !== "NEUTRAL" && prediction in COMMAND_MAP) {
-      targetPositions.current.forEach(target => {
-        const dist = calculateDistance(cursor, target);
-        if (dist < SNAP_DISTANCE) {
-          // If close, trigger snap 
-          console.log(`AIM ASSIST SNAP: Moving cursor to ${target.id}`);
-          setCursor({ x: target.x, y: target.y });
-        }
+    if (keyToPress) {
+      console.log(`BCI Command: ${prediction}. Dispatching keydown event for: ${keyToPress.toUpperCase()}`);
+      
+      // change later to work 
+      
+      const event = new KeyboardEvent('keydown', {
+        key: keyToPress,
+        code: keyToPress.toUpperCase(),
+        bubbles: true
       });
-    }
+      document.dispatchEvent(event);
 
-    if (trainingMode) setSaved(prev => prev + 1);
-  }, [prediction, connected]);
-
-  // Manual Keyboard Input
-  useEffect(() => {
-    const handleKeyPress = (event) => {
-      // Map the pressed key to a BCI direction
-      let newPrediction = null;
-      switch (event.key.toLowerCase()) {
-        case 'a':
-          newPrediction = 'LEFT';
-          break;
-        case 'd':
-          newPrediction = 'RIGHT';
-          break;
-        case 'w':
-          newPrediction = 'UP';
-          break;
-        case 's':
-          newPrediction = 'DOWN';
-          break;
-        default:
-          return;
-      }
-
-      event.preventDefault();
-
-      // Only update prediction if the headset is "connected"
-      if (connected) {
-        setPrediction(newPrediction);
-
-        // Optional: Reset to NEUTRAL shortly after to simulate a momentary thought/tap
-        setTimeout(() => {
-          setPrediction('NEUTRAL');
-        }, 100);
-      }
-    };
-
-    // Attach the event listener to the entire window
-    window.addEventListener('keydown', handleKeyPress);
-
-    // Clean up the event listener when the component unmounts
-    return () => {
-      window.removeEventListener('keydown', handleKeyPress);
-    };
-  }, [connected]); 
-  
-  // EEG graph animator
-  useEffect(() => {
-    const canvas = graphRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    const W = canvas.width;
-    const H = canvas.height;
-
-    const colors = {
-      alpha: "#00eaff",
-      beta: "#00ff90",
-      theta: "#ffdd00",
-      gamma: "#ff3b3b"
-    };
-
-    const data = {
-      alpha: [],
-      beta: [],
-      theta: [],
-      gamma: []
-    };
-    let animationFrameId;
-
-    function push() {
-      data.alpha.push(Math.random() * 40 + 60);
-      data.beta.push(Math.random() * 35 + 55);
-      data.theta.push(Math.random() * 30 + 50);
-      data.gamma.push(Math.random() * 25 + 45);
-
-      Object.keys(data).forEach(k => {
-        if (data[k].length > W) data[k].shift();
+      // Optionally dispatch 'keyup' to simulate a tap
+      const keyupEvent = new KeyboardEvent('keyup', {
+        key: keyToPress,
+        code: keyToPress.toUpperCase(),
+        bubbles: true
       });
+      setTimeout(() => document.dispatchEvent(keyupEvent), 50);
+
+    } else if (prediction === "NEUTRAL") {
+      console.log("BCI Command: NEUTRAL. No key dispatched.");
     }
+  }, [prediction, connected, cursor]); // Reruns whenever prediction changes
 
-    function render() {
-      ctx.clearRect(0, 0, W, H);
-
-      Object.keys(data).forEach(k => {
-        ctx.strokeStyle = colors[k];
-        ctx.beginPath();
-        data[k].forEach((v, i) => {
-          const min = 30, max = 110;
-          const y = H - ((v - min) / (max - min)) * H;
-          ctx.lineTo(i, y);
-        });
-        ctx.stroke();
-      });
-
-      animationFrameId = requestAnimationFrame(render);
-    }
-
-    function loop() {
-      if (connected) push();
-      animationFrameId = requestAnimationFrame(loop);
-    }
-    
-    if(connected) {
-      push();
-      render();
-      loop();
-    }
-    
-    return () => cancelAnimationFrame(animationFrameId);
-
-  }, [connected]);
-
-  // cleanup when component goes poof
+   // cleanup when component goes poof
   useEffect(() => {
     return () => clearInterval(mockRef.current);
   }, []);
 
+  // start/end training mode
   const toggleTraining = () => {
     setSaved(0);
     setTrainingMode(prev => !prev);
