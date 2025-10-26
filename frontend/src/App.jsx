@@ -5,6 +5,15 @@ import "./App.css";
 // fake model classes. real later
 const DIR = ["UP", "DOWN", "LEFT", "RIGHT", "NEUTRAL"];
 
+// maps data to directional inputs
+const WASD_MAP = {
+  UP: "w",
+  DOWN: "s",
+  LEFT: "a",
+  RIGHT: "d",
+  NEUTRAL: null,
+};
+
 export default function App() {
   const [status, setStatus] = useState("Disconnected");
   const [prediction, setPrediction] = useState("…thinking…");
@@ -44,6 +53,36 @@ export default function App() {
   useEffect(() => {
     return () => clearInterval(mockRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!connected || prediction === "…thinking…") return;
+
+    const keyToPress = WASD_MAP[prediction];
+
+    if (keyToPress) {
+      console.log(`BCI Command: ${prediction}. Dispatching keydown event for: ${keyToPress.toUpperCase()}`);
+      
+      // change later to work with 
+      
+      const event = new KeyboardEvent('keydown', {
+        key: keyToPress,
+        code: keyToPress.toUpperCase(),
+        bubbles: true
+      });
+      document.dispatchEvent(event);
+
+      // Optionally dispatch 'keyup' to simulate a tap
+      const keyupEvent = new KeyboardEvent('keyup', {
+        key: keyToPress,
+        code: keyToPress.toUpperCase(),
+        bubbles: true
+      });
+      setTimeout(() => document.dispatchEvent(keyupEvent), 50);
+
+    } else if (prediction === "NEUTRAL") {
+      console.log("BCI Command: NEUTRAL. No key dispatched.");
+    }
+  }, [prediction, connected]); // Reruns whenever prediction changes
 
   // start/end training mode
   const toggleTraining = () => {
