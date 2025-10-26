@@ -20,6 +20,12 @@ export default function App() {
   const [connected, setConnected] = useState(false);
   const [trainingMode, setTrainingMode] = useState(false);
   const [saved, setSaved] = useState(0);
+  const graphRef = useRef(null);
+  //const fpsRef = useRef(0);
+  //const lastFrameRef = useRef(Date.now());
+  //const [history, setHistory] = useState([]);
+
+
 
   const mockRef = useRef(null); // holds mock interval
 
@@ -45,6 +51,7 @@ export default function App() {
     mockRef.current = setInterval(() => {
       const r = DIR[Math.floor(Math.random() * DIR.length)];
       setPrediction(r);
+      setHistory(h => [r, ...h].slice(0, 6)); // last 6 shown
       if (trainingMode) setSaved(prev => prev + 1);
     }, 700);
   };
@@ -84,6 +91,68 @@ export default function App() {
     }
   }, [prediction, connected]); // Reruns whenever prediction changes
 
+  // fake eeg line animator
+// fake EEG multi-band animator
+    useEffect(() => {
+      const canvas = graphRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width;
+      const H = canvas.height;
+
+      const colors = {
+        alpha: "#00eaff",
+        beta: "#00ff90",
+        theta: "#ffdd00",
+        gamma: "#ff3b3b"
+      };
+
+      const data = {
+        alpha: [],
+        beta: [],
+        theta: [],
+        gamma: []
+      };
+
+      function push() {
+        data.alpha.push(Math.random() * 40 + 60);
+        data.beta.push(Math.random() * 35 + 55);
+        data.theta.push(Math.random() * 30 + 50);
+        data.gamma.push(Math.random() * 25 + 45);
+
+        Object.keys(data).forEach(k => {
+          if (data[k].length > W) data[k].shift();
+        });
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, W, H);
+
+        Object.keys(data).forEach(k => {
+          ctx.strokeStyle = colors[k];
+          ctx.beginPath();
+          data[k].forEach((v, i) => {
+            const y = H - (v / 100) * H;
+            ctx.lineTo(i, y);
+          });
+          ctx.stroke();
+        });
+
+        requestAnimationFrame(render);
+      }
+
+      function loop() {
+        if (connected) push();
+        requestAnimationFrame(loop);
+      }
+
+      push();
+      render();
+      loop();
+    }, [connected]);
+
+
   // start/end training mode
   const toggleTraining = () => {
     setTrainingMode(!trainingMode);
@@ -91,13 +160,27 @@ export default function App() {
   };
 
   // gives a rad direction wheel vibe
-  const wheelPos = {
-    transform: `rotate(${getRotation(prediction)}deg)`,
-    transition: "0.2s ease-out"
-  };
+ // const wheelPos = {
+  //  transform: `rotate(${getRotation(prediction)}deg)`,
+ //   transition: "0.2s ease-out"
+ // };
+  // highlight active direction
+  const highlight = active => ({
+    fontSize: "3.2rem",
+    opacity: active ? 1 : 0.35,
+    transition: "0.2s",
+    color: active ? "#00eaff" : "#666"
+  });
+
 
   return (
     <div style={styles.container}>
+      {/* header bar */}
+      <div style={styles.header}>
+        <span style={styles.brand}>🧠 MuseTalk LIVE</span>
+        <span>{status}</span>
+      </div>
+
       <h1>BCI Brain Control </h1>
 
       {/* lil dot to show live connection */}
@@ -110,14 +193,25 @@ export default function App() {
         {connected ? "Disconnect" : "Connect Headset"}
       </button>
 
-      {/* the wheel */}
+      {/* the wheel 
       <div style={styles.wheelContainer}>
         <img
           src="https://png.pngtree.com/png-vector/20230220/ourlarge/pngtree-spin-wheel-vector-illustration-png-image_6606505.png"
           alt="wheel"
           style={{...styles.wheelImg, ...wheelPos}}
         />
+      </div> */}
+      {/* direction hud */}
+      <div style={styles.hud}>
+        <div style={highlight(prediction === "UP")}>↑</div>
+        <div style={styles.midRow}>
+         <div style={highlight(prediction === "LEFT")}>←</div>
+         <div style={highlight(prediction === "NEUTRAL")}>●</div>
+         <div style={highlight(prediction === "RIGHT")}>→</div>
+        </div>
+        <div style={highlight(prediction === "DOWN")}>↓</div>
       </div>
+
 
       {/* thought output */}
       <h2>Output: {prediction}</h2>
@@ -135,20 +229,36 @@ export default function App() {
       {trainingMode && (
         <p>Saved: {saved}</p>
       )}   
+      {/* eeg graph */}
+    <canvas
+      ref={graphRef}
+      width="700"
+      height="190"
+      style={styles.canvas}
+    />
+
+    <div style={styles.legend}>
+      <span style={{color:"#00eaff"}}>Alpha</span> ·{" "}
+      <span style={{color:"#00ff90"}}>Beta</span> ·{" "}
+      <span style={{color:"#ffdd00"}}>Theta</span> ·{" "}
+      <span style={{color:"#ff3b3b"}}>Gamma</span>
+    </div>
+
+
     </div>
   );
 }
 
 // stupid helper bc wheel needs angles
-function getRotation(dir) {
-  switch (dir) {
-    case "UP": return 0;
-    case "RIGHT": return 90;
-    case "DOWN": return 180;
-    case "LEFT": return 270;
-    default: return 0; // neutral
-  }
-}
+//function getRotation(dir) {
+ // switch (dir) {
+  //  case "UP": return 0;
+  //  case "RIGHT": return 90;
+   // case "DOWN": return 180;
+   // case "LEFT": return 270;
+   // default: return 0; // neutral
+ // }
+//}
 
 // UI junk. fine for now
 const styles = {
@@ -179,5 +289,42 @@ const styles = {
   wheelImg: {
     width: "120px",
     height: "120px"
+  },
+    hud: {
+    marginTop: "1.8rem"
+  },
+  midRow: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  header: {
+    width: "100%",
+    padding: "0.5rem",
+    display: "flex",
+    justifyContent: "space-between",
+    background: "#222",
+    color: "#0ff",
+    fontWeight: "600",
+    fontSize: "1rem"
+  },
+  brand: { fontSize: "1.1rem" },
+  canvas: {
+    marginTop: "1rem",
+    border: "1px solid #0ff",
+    borderRadius: "6px"
+  },
+  historyBox: {
+    marginTop: "0.8rem",
+    fontSize: "1.3rem"
+  },
+  histItem: {
+    margin: "0 6px",
+    color: "#00eaff"
+  },
+  legend: {
+  marginTop: "6px",
+  fontSize: "0.9rem",
+  fontWeight: "600"
   }
 };
